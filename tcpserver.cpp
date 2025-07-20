@@ -2,7 +2,7 @@
 #include <QNetworkInterface>
 
 TcpServer::TcpServer(QObject *parent)
-    : QObject(parent)
+    : QTcpServer(parent)
     , m_server(nullptr)
     , m_isRunning(false)
     , m_port(8080)

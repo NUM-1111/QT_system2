@@ -14,7 +14,7 @@
  * 支持的命令：
  * - "/show_ui" : 启动前端界面
  */
-class TcpServer : public QObject
+class TcpServer : public QTcpServer
 {
     Q_OBJECT
 

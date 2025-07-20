@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    qDebug() << "=== 分系统1启动 ===";
+    qDebug() << "=== 分系统2启动 ===";
 
     // 创建TCP服务端
     TcpServer *tcpServer = new TcpServer(&a);
@@ -46,18 +46,21 @@ int main(int argc, char *argv[])
     });
 
     // 启动TCP服务端
-    if (!tcpServer->startServer(8080)) {
-        qDebug() << "❌ TCP服务端启动失败";
+    bool ok = tcpServer->startServer(8081); // ✅ system2 建议用 8081
+    qDebug() << "startServer 返回:" << ok;
+    if (!ok) {
+        qDebug() << "错误信息:" << tcpServer->serverError();
         return -1;
     }
 
-    qDebug() << "✅ TCP服务端启动成功，监听端口8080";
-    qDebug() << "✅ 分系统1启动完成，等待主系统连接...";
+
+    qDebug() << "✅ TCP服务端启动成功，监听端口8081";
+    qDebug() << "✅ 分系统2启动完成，等待主系统连接...";
     qDebug() << "💡 支持的命令: /show_ui, /status, /help";
 
     // 启动应用程序事件循环
     int result = a.exec();
 
-    qDebug() << "=== 分系统1退出 ===";
+    qDebug() << "=== 分系统2退出 ===";
     return result;
 }
