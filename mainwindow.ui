@@ -24,7 +24,7 @@
        </font>
       </property>
       <property name="text">
-       <string>分系统1 - 运行中</string>
+       <string>分系统2 - 运行中</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
