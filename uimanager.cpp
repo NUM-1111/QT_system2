@@ -1,99 +1,71 @@
 #include "uimanager.h"
-#include "mainwindow.h"
+#include <QDebug>
 
 UiManager::UiManager(QObject *parent)
     : QObject(parent)
-    , m_windowCounter(0)
 {
 }
 
 UiManager::~UiManager()
 {
-    closeAllWindows();
-}
-
-bool UiManager::showNewWindow()
-{
-    // 创建新的主窗口
-    MainWindow *window = new MainWindow();
-    if (!window) {
-        qDebug() << "创建界面失败";
-        return false;
-    }
-
-    // 设置窗口标题
-    m_windowCounter++;
-    QString title = QString("分系统1 - 界面 %1").arg(m_windowCounter);
-    window->setWindowTitle(title);
-
-    // 连接窗口关闭信号
-    connect(window, &MainWindow::windowClosed, this, &UiManager::handleWindowClosed);
-
-    // 添加到窗口列表
-    m_windows.append(window);
-
-    // 显示窗口
-    window->show();
-    window->raise();
-    window->activateWindow();
-
-    qDebug() << "显示新界面:" << title << "，当前界面数量:" << m_windows.size();
-    emit windowShown();
-
-    return true;
-}
-
-void UiManager::closeAllWindows()
-{
-    qDebug() << "关闭所有界面，当前界面数量:" << m_windows.size();
-
-    // 关闭所有窗口
-    for (MainWindow *window : m_windows) {
+    // 程序退出前关闭所有窗口
+    for (auto window : m_userWindows) {
         if (window) {
             window->close();
             window->deleteLater();
         }
     }
-
-    m_windows.clear();
-    m_windowCounter = 0;
-
-    emit allWindowsClosed();
-    qDebug() << "所有界面已关闭";
+    m_userWindows.clear();
 }
 
-int UiManager::getWindowCount() const
+void UiManager::handleUser(const QString &userId)
 {
-    return m_windows.size();
-}
-
-bool UiManager::hasVisibleWindows() const
-{
-    for (MainWindow *window : m_windows) {
-        if (window && window->isVisible()) {
-            return true;
+    if (m_userWindows.contains(userId)) {
+        MainWindow *window = m_userWindows[userId];
+        if (window->isHidden()) {
+            window->show();
+            window->raise();
+            window->activateWindow();
+            qDebug() << "恢复显示窗口:" << userId;
+        } else {
+            qDebug() << "窗口已存在并可见:" << userId;
         }
+    } else {
+        // 创建新的窗口
+        MainWindow *newWindow = new MainWindow;
+        newWindow->setWindowTitle("用户窗口 - " + userId);
+
+        // 记录映射关系
+        m_userWindows[userId] = newWindow;
+
+        // 绑定关闭信号，用于隐藏或移除
+        connect(newWindow, &MainWindow::windowClosed,
+                this, &UiManager::handleWindowClosed);
+
+        newWindow->show();
+        qDebug() << "创建并显示新窗口:" << userId;
     }
-    return false;
 }
 
 void UiManager::handleWindowClosed()
 {
     MainWindow *window = qobject_cast<MainWindow*>(sender());
-    if (!window) {
-        return;
+    if (!window) return;
+
+    // 查找属于哪个用户ID
+    QString userIdToRemove;
+    for (auto it = m_userWindows.begin(); it != m_userWindows.end(); ++it) {
+        if (it.value() == window) {
+            userIdToRemove = it.key();
+            break;
+        }
     }
 
-    // 从列表中移除
-    m_windows.removeOne(window);
-    window->deleteLater();
-
-    qDebug() << "界面已关闭，当前界面数量:" << m_windows.size();
-    emit windowClosed();
-
-    // 如果没有界面了，发出信号
-    if (m_windows.isEmpty()) {
-        qDebug() << "所有界面已关闭";
-        emit allWindowsClosed();
+    if (!userIdToRemove.isEmpty()) {
+        qDebug() << "窗口已关闭（隐藏）:" << userIdToRemove;
+        emit windowClosed();
+        // 不移除映射，仅隐藏
+        window->hide();
     }
+
 }

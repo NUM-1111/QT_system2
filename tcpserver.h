@@ -22,6 +22,7 @@ public:
     explicit TcpServer(QObject *parent = nullptr);
     ~TcpServer();
 
+    QString serverError() const;  // 声明
     /**
      * @brief 启动TCP服务端
      * @param port 监听端口，默认8080
@@ -70,6 +71,8 @@ signals:
      * @param clientAddress 客户端地址
      */
     void commandReceived(const QString &command, const QString &clientAddress);
+
+    void userIdReceived(const QString& userId); // 传出用户ID
 
 private slots:
     /**

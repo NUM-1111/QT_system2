@@ -5,13 +5,18 @@ TcpServer::TcpServer(QObject *parent)
     : QTcpServer(parent)
     , m_server(nullptr)
     , m_isRunning(false)
-    , m_port(8080)
+    , m_port(8081)
 {
 }
 
 TcpServer::~TcpServer()
 {
     stopServer();
+}
+
+QString TcpServer::serverError() const
+{
+    return m_server ? m_server->errorString() : "server 未初始化";
 }
 
 bool TcpServer::startServer(quint16 port)
@@ -103,7 +108,7 @@ void TcpServer::handleNewConnection()
     emit clientConnected(clientAddress);
 
     // 发送欢迎消息
-    sendResponse("欢迎连接到分系统1！", clientSocket);
+    sendResponse("欢迎连接到分系统2！", clientSocket);
 }
 
 void TcpServer::handleClientDisconnected()
@@ -150,7 +155,8 @@ void TcpServer::processCommand(const QString &command, QTcpSocket *clientSocket)
     QString response;
 
     if (command == "/show_ui") {
-        qDebug() << "收到show_ui命令，准备启动界面";
+        qDebug() << "收到 show_ui 命令";
+        qDebug() << "✅ system2 收到 show_ui";
         emit showUiRequested();
         response = "OK: 界面启动命令已执行";
     }
@@ -163,12 +169,19 @@ void TcpServer::processCommand(const QString &command, QTcpSocket *clientSocket)
                    "/status - 查看系统状态\n"
                    "/help - 显示帮助信息";
     }
+    else if (!command.startsWith("/")) {
+        // 🔥 不是以斜杠开头的内容，视为 userId
+        qDebug() << "收到用户ID: " << command;
+        emit userIdReceived(command);  // 🚀 发出信号
+        response = "OK: 用户ID已处理";
+    }
     else {
         response = QString("ERROR: 未知命令 '%1'，输入 /help 查看支持的命令").arg(command);
     }
 
     sendResponse(response, clientSocket);
 }
+
 
 void TcpServer::sendResponse(const QString &response, QTcpSocket *clientSocket)
 {
